@@ -2,26 +2,40 @@ pipeline{
     agent any
     environment{
         IMAGE_NAME ='sirishadevops/java-mvn-privaterepos:php$BUILD_NUMBER'
-        SERVER_IP ='ec2-user@15.207.84.42'
+        DEV_SERVER_IP ='ec2-user@13.233.174.38'
+        TEST_SERVER_IP 'ec2-user@13.233.131.120'
     }
     stages{
-        stage('Build docker image'){
-            agent any
-             steps{
-                 script{
-        sshagent(['Test_Server_Key']) {
+    stage('BUILD DOCKER IMAGE ON DEV_SERVER'){
+        steps{
+            script{
+        sshagent(['DEV_SERVER']) {
         withcridentials([usernamepassword(cridentialsId: 'docker-hub', passwordvarible: 'PASSWORD', usernamevariable: 'username')]){
-    echo "Building the docker image"
-    sh "scp -o strictHostkeychecking=no -r docker-files ${SERVER_IP}:/home/ec2-user"
-    sh "ssh -o strictHostkeychecking=no ${SERVER_IP} 'bash ~/docker-files/docker-script.sh'"
-    sh "ssh ${SERVER_IP} sudo docker build -t ${IMAGE_NAME} /home/ec2-user/docker-files/"          
-    sh "ssh ${SERVER_IP} sudo docker login -u $USERNAME -p $PASSWORD"
-    sh "ssh ${SERVER_IP} sudo docker push ${IMAGE_NAME}"
-    sh "ssh ${SERVER_IP} sudo docker-compose -f docker-compose.yml up -d"
+    echo "BUILDING THE DOCKER IMAGE"
+    sh "scp -o strictHostkeychecking=no -r docker-files ${DEV_SERVER_IP}:/home/ec2-user"
+    sh "ssh -o strictHostkeychecking=no ${DEV_SERVER_IP} 'bash ~/docker-files/docker-script.sh'"
+    sh "ssh ${DEV_SERVER_IP} sudo docker build -t ${IMAGE_NAME} /home/ec2-user/docker-files/"          
+    sh "ssh ${DEV_SERVER_IP} sudo docker login -u $USERNAME -p $PASSWORD"
+    sh "ssh ${DEV_SERVER_IP} sudo docker push ${IMAGE_NAME}"
                 }       
             }     
         }
           }
+}
+    stage("RUN PHP_APP ON TEST_SERVER"){
+     steps{
+         script{
+        sshagent(['DEV_SERVER']) {
+        withcridentials([usernamepassword(cridentialsId: 'docker-hub', passwordvarible: 'PASSWORD', usernamevariable: 'username')]){
+    echo "Building the docker image"
+    sh "scp -o strictHostkeychecking=no -r docker-files ${TEST_SERVER_IP}:/home/ec2-user"
+    sh "ssh -o strictHostkeychecking=no ${TEST_SERVER_IP} 'bash ~/docker-files/docker-script.sh'"          
+    sh "ssh ${TEST_SERVER_IP} sudo docker login -u $USERNAME -p $PASSWORD"
+    sh "ssh ${TEST_SERVER_IP} bash /home/ec2-user/docker-files/docker-compose-script.sh ${IMAGE_NAME}"
+            }
+        }
+    }    
+    }
 }
     }
 }
