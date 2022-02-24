@@ -1,0 +1,26 @@
+pipeline{
+    agent any
+    stages{
+        stage('Build docker image'){
+            agent any
+             steps{
+                 script{
+        sshagent(['Test_Server_Key']) {
+        withcridentials([usernamepassword(cridentialsId: 'docker-hub', passwordvarible: 'PASSWORD', usernamevariable: 'username')]){
+    echo "Building the docker image"
+    sh "scp -o strictHostkeychecking=no docker-script.sh ec2-user@172.31.33.78:/home/ec2-user" 
+    sh "scp -o strictHostkeychecking=no ec2-user@172.31.33.78 'bash ~/docker-script.sh'"
+    sh "ssh ec2-user@172.31.33.78 sudo docker build -t sirishadevops/java-mvn-privaterepos:php$BUILD_NUMBER /home/ec2-user/php-1"          
+                 }       
+            }
+                     
+        }
+        stage('Deploy app docker-compose'){
+            steps{
+                script{
+
+                }
+            }
+        }
+    }
+}
