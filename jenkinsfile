@@ -3,7 +3,7 @@ pipeline{
     environment{
         IMAGE_NAME ='sirishadevops/java-mvn-privaterepos:php$BUILD_NUMBER'
         DEV_SERVER_IP ='ec2-user@13.233.174.38'
-        TEST_SERVER_IP 'ec2-user@13.233.131.120'
+        TEST_SERVER_IP 'ec2-user@172.31.37.110'
     }
     stages{
     stage('BUILD DOCKER IMAGE ON DEV_SERVER'){
